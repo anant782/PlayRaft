@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlayRift - Free Online Games</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
+<style>
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .bg-poki-gradient {
+    background-color: #00a1ff;
+    background-image:
+      linear-gradient(135deg, rgba(2, 110, 188, 0.8) 0%, rgba(0, 161, 255, 0) 50%),
+      linear-gradient(45deg, rgba(0, 255, 159, 0.8) 0%, rgba(0, 255, 159, 0) 100%),
+      linear-gradient(90deg, #00ff9f, #00a1ff);
+  }
+</style>
+</head>
+  <body class="bg-poki-gradient">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
