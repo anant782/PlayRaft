@@ -56,7 +56,7 @@ const App: React.FC = () => {
   const [allGames, setAllGames] = useState<Game[]>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start in a loading state
   const [hasMore, setHasMore] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [sdkInitialized, setSdkInitialized] = useState(false);
@@ -70,9 +70,21 @@ const App: React.FC = () => {
         try {
           await window.CrazyGames.SDK.init();
           setSdkInitialized(true);
-          const currentEnv = window.CrazyGames.SDK.environment;
+          
+          // Check for a URL override for testing purposes
+          const urlParams = new URLSearchParams(window.location.search);
+          const forceEnv = urlParams.get('force_env');
+
+          let currentEnv: 'local' | 'crazygames' | 'disabled' = window.CrazyGames.SDK.environment;
+
+          // If a valid override is present, use it.
+          if (forceEnv === 'crazygames' || forceEnv === 'local') {
+            console.warn(`DEVELOPER OVERRIDE: Forcing SDK environment to '${forceEnv}'`);
+            currentEnv = forceEnv;
+          }
+
           setSdkEnvironment(currentEnv);
-          console.log('CrazyGames SDK Initialized. Environment:', currentEnv);
+          console.log('CrazyGames SDK Initialized. Effective Environment:', currentEnv);
         } catch (error) {
           console.error('Failed to initialize CrazyGames SDK:', error);
         }
@@ -140,8 +152,6 @@ const App: React.FC = () => {
   }, []);
 
   const loadInitialGames = useCallback(async (environment: string | null) => {
-    setLoading(true);
-    
     const gamePixPromise = fetchGamePixGames(1);
     
     let combinedGames: Game[] = [];
@@ -289,17 +299,19 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="space-y-12">
-          <MosaicGameGrid games={featuredGames} onSelectGame={handleSelectGame} />
+        {allGames.length > 0 && (
+          <div className="space-y-12">
+            <MosaicGameGrid games={featuredGames} onSelectGame={handleSelectGame} />
 
-          {CATEGORIES.map(category => {
-            const games = gamesByCategory.get(category);
-            if (games && games.length > 5) {
-              return <CategorySection key={category} title={category} games={games} onSelectGame={handleSelectGame} />;
-            }
-            return null;
-          })}
-        </div>
+            {CATEGORIES.map(category => {
+              const games = gamesByCategory.get(category);
+              if (games && games.length > 5) {
+                return <CategorySection key={category} title={category} games={games} onSelectGame={handleSelectGame} />;
+              }
+              return null;
+            })}
+          </div>
+        )}
         
         {moreGames.length > 0 && (
           <div className="mt-12">
@@ -308,8 +320,8 @@ const App: React.FC = () => {
         )}
 
         <div className="text-center mt-12">
-          {loading && <p className="text-lg text-white font-semibold animate-pulse">Loading more games...</p>}
-          {!loading && hasMore && (
+          {loading && <p className="text-lg text-white font-semibold animate-pulse">Loading games...</p>}
+          {!loading && hasMore && allGames.length > 0 && (
             <button
               onClick={handleLoadMore}
               className="bg-white text-blue-500 font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-transform transform hover:scale-105 duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
