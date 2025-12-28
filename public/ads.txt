@@ -1,4 +1,5 @@
-#gpx-property-R49P7
+google.com, pub-8547852600483627, DIRECT, f08c47fec0942fa0
+#gpx-property-A9LA5
 #gpx-last-updated-2024-11-21
 #gpx-reviq
 rev.iq, Kf077RYmx6XvWT8mhSbYq7LIQTU, DIRECT
