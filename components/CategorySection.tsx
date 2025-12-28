@@ -70,7 +70,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ title, games, onSelec
         className="flex space-x-4 overflow-x-auto pb-4 -mb-4 scrollbar-hide"
       >
         {games.slice(0, 15).map(game => (
-          <div key={game.id} className="w-48 sm:w-56 flex-shrink-0">
+          <div key={game.id} className="w-40 sm:w-48 md:w-56 flex-shrink-0">
             <GameCard game={game} onSelectGame={onSelectGame} />
           </div>
         ))}

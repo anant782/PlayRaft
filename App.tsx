@@ -9,6 +9,18 @@ import MosaicGameGrid from './components/MosaicGameGrid';
 import Logo from './components/Logo';
 import UserIcon from './components/icons/UserIcon';
 
+const CACHE_KEY = 'playrift_games_cache';
+
+const getCachedGames = (): Game[] => {
+  try {
+    const item = window.localStorage.getItem(CACHE_KEY);
+    return item ? JSON.parse(item) : [];
+  } catch (error) {
+    console.error("Error reading from localStorage:", error);
+    return [];
+  }
+};
+
 // Define a simple type for the user object
 interface CrazyGamesUser {
   username: string;
@@ -53,10 +65,10 @@ const shuffleArray = (array: any[]) => {
 
 
 const App: React.FC = () => {
-  const [allGames, setAllGames] = useState<Game[]>([]);
+  const [allGames, setAllGames] = useState<Game[]>(getCachedGames());
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true); // Start in a loading state
+  const [loading, setLoading] = useState(getCachedGames().length === 0);
   const [hasMore, setHasMore] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [sdkInitialized, setSdkInitialized] = useState(false);
@@ -71,13 +83,10 @@ const App: React.FC = () => {
           await window.CrazyGames.SDK.init();
           setSdkInitialized(true);
           
-          // Check for a URL override for testing purposes
           const urlParams = new URLSearchParams(window.location.search);
           const forceEnv = urlParams.get('force_env');
-
           let currentEnv: 'local' | 'crazygames' | 'disabled' = window.CrazyGames.SDK.environment;
 
-          // If a valid override is present, use it.
           if (forceEnv === 'crazygames' || forceEnv === 'local') {
             console.warn(`DEVELOPER OVERRIDE: Forcing SDK environment to '${forceEnv}'`);
             currentEnv = forceEnv;
@@ -89,7 +98,6 @@ const App: React.FC = () => {
           console.error('Failed to initialize CrazyGames SDK:', error);
         }
       } else {
-          // SDK script might not be loaded yet, retry shortly
           setTimeout(initializeSdk, 500);
       }
     };
@@ -158,14 +166,11 @@ const App: React.FC = () => {
     let gamePixHasMore = false;
 
     if (environment === 'crazygames') {
-        console.log("CrazyGames environment detected. Fetching from multiple sources.");
         const gamePushPromise = fetchGamePushGames();
         const [gamePixResult, gamePushResult] = await Promise.all([gamePixPromise, gamePushPromise]);
-        
         combinedGames = shuffleArray([...gamePixResult.games, ...gamePushResult]);
         gamePixHasMore = gamePixResult.hasMore;
     } else {
-        console.log("Standard environment. Fetching from default source.");
         const gamePixResult = await gamePixPromise;
         combinedGames = gamePixResult.games;
         gamePixHasMore = gamePixResult.hasMore;
@@ -173,21 +178,25 @@ const App: React.FC = () => {
 
     const uniqueGameIds = new Set();
     const uniqueGames = combinedGames.filter(game => {
-      if (uniqueGameIds.has(game.id)) {
-        return false;
-      }
+      if (uniqueGameIds.has(game.id)) return false;
       uniqueGameIds.add(game.id);
       return true;
     });
 
-    setAllGames(uniqueGames);
+    if (uniqueGames.length > 0) {
+      setAllGames(uniqueGames);
+      try {
+        window.localStorage.setItem(CACHE_KEY, JSON.stringify(uniqueGames));
+      } catch (error) {
+        console.error("Error writing to localStorage:", error);
+      }
+    }
     setHasMore(gamePixHasMore);
     setPage(1);
     setLoading(false);
   }, [fetchGamePixGames, fetchGamePushGames]);
 
   useEffect(() => {
-    // Wait until SDK is initialized to decide which games to load
     if (sdkInitialized) {
         loadInitialGames(sdkEnvironment);
     }
@@ -197,7 +206,6 @@ const App: React.FC = () => {
     if (isSdkUsable) {
       try {
         window.CrazyGames.SDK.game.gameplayStart();
-        console.log('CrazyGames: Gameplay started.');
       } catch (error) {
         console.error('CrazyGames SDK error on gameplayStart:', error);
       }
@@ -210,7 +218,6 @@ const App: React.FC = () => {
     if (isSdkUsable) {
       try {
         window.CrazyGames.SDK.game.gameplayStop();
-        console.log('CrazyGames: Gameplay stopped.');
       } catch (error) {
           console.error('CrazyGames SDK error on gameplayStop:', error);
       }
@@ -228,7 +235,13 @@ const App: React.FC = () => {
       setAllGames(prev => {
         const existingGameIds = new Set(prev.map(g => g.id));
         const uniqueNewGames = newGames.filter(g => !existingGameIds.has(g.id));
-        return [...prev, ...uniqueNewGames];
+        const updatedGames = [...prev, ...uniqueNewGames];
+        try {
+          window.localStorage.setItem(CACHE_KEY, JSON.stringify(updatedGames));
+        } catch (error) {
+          console.error("Error updating localStorage", error);
+        }
+        return updatedGames;
       });
       setPage(nextPage);
     }
@@ -237,19 +250,10 @@ const App: React.FC = () => {
   };
   
   const handleGetUser = async () => {
-    if (!isSdkUsable) {
-      console.warn("SDK not usable, can't get user.");
-      return;
-    }
+    if (!isSdkUsable) return;
     try {
-      console.log('Fetching user...');
       const fetchedUser = await window.CrazyGames.SDK.user.getUser();
-      if (fetchedUser) {
-        console.log('User found:', fetchedUser);
-        setUser(fetchedUser);
-      } else {
-        console.log('No user is logged in.');
-      }
+      setUser(fetchedUser);
     } catch (error) {
       console.error('Failed to fetch user:', error);
     }
@@ -259,7 +263,6 @@ const App: React.FC = () => {
   const moreGames = useMemo(() => allGames.slice(FEATURED_GAMES_COUNT), [allGames]);
   const gamesByCategory = useMemo(() => {
     const categoryMap = new Map<string, Game[]>();
-    // Use `moreGames` to populate categories so there's no overlap with "Featured"
     moreGames.forEach(game => { 
       if (game.category) {
         const matchedCategory = CATEGORIES.find(c => game.category.toLowerCase().includes(c.toLowerCase()));
@@ -299,28 +302,36 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {allGames.length > 0 && (
-          <div className="space-y-12">
-            <MosaicGameGrid games={featuredGames} onSelectGame={handleSelectGame} />
-
-            {CATEGORIES.map(category => {
-              const games = gamesByCategory.get(category);
-              if (games && games.length > 5) {
-                return <CategorySection key={category} title={category} games={games} onSelectGame={handleSelectGame} />;
-              }
-              return null;
-            })}
+        {loading && allGames.length === 0 ? (
+          <div className="flex justify-center items-center h-96">
+            <p className="text-2xl text-white font-semibold animate-pulse">Loading awesome games...</p>
           </div>
-        )}
-        
-        {moreGames.length > 0 && (
-          <div className="mt-12">
-             <MosaicGameGrid games={moreGames} onSelectGame={handleSelectGame} />
+        ) : allGames.length > 0 ? (
+          <>
+            <div className="space-y-12">
+              <MosaicGameGrid games={featuredGames} onSelectGame={handleSelectGame} />
+              {CATEGORIES.map(category => {
+                const games = gamesByCategory.get(category);
+                if (games && games.length > 5) {
+                  return <CategorySection key={category} title={category} games={games} onSelectGame={handleSelectGame} />;
+                }
+                return null;
+              })}
+            </div>
+            {moreGames.length > 0 && (
+              <div className="mt-12">
+                <MosaicGameGrid games={moreGames} onSelectGame={handleSelectGame} />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex justify-center items-center h-96">
+            <p className="text-2xl text-white font-semibold">No games available right now.</p>
           </div>
         )}
 
         <div className="text-center mt-12">
-          {loading && <p className="text-lg text-white font-semibold animate-pulse">Loading games...</p>}
+          {loading && allGames.length > 0 && <p className="text-lg text-white font-semibold animate-pulse">Loading more games...</p>}
           {!loading && hasMore && allGames.length > 0 && (
             <button
               onClick={handleLoadMore}
