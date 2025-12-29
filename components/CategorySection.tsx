@@ -53,15 +53,15 @@ const CategorySection: React.FC<CategorySectionProps> = ({ title, games, onSelec
 
   return (
     <section className="relative group">
-      <h2 className="text-2xl font-bold mb-4 text-white">{title} Games</h2>
+      <h2 className="text-2xl font-bold mb-4 text-brand-text-primary">{title} Games</h2>
       
       {canScrollLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-8 z-10 p-2 bg-white/80 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 -ml-4"
+          className="absolute left-0 top-1/2 -translate-y-8 z-10 p-2 bg-brand-card/80 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-accent -ml-4"
           aria-label="Scroll left"
         >
-          <ChevronLeftIcon className="h-6 w-6 text-gray-800" />
+          <ChevronLeftIcon className="h-6 w-6 text-brand-text-primary" />
         </button>
       )}
 
@@ -79,10 +79,10 @@ const CategorySection: React.FC<CategorySectionProps> = ({ title, games, onSelec
       {canScrollRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-8 z-10 p-2 bg-white/80 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 -mr-4"
+          className="absolute right-0 top-1/2 -translate-y-8 z-10 p-2 bg-brand-card/80 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-accent -mr-4"
           aria-label="Scroll right"
         >
-          <ChevronRightIcon className="h-6 w-6 text-gray-800" />
+          <ChevronRightIcon className="h-6 w-6 text-brand-text-primary" />
         </button>
       )}
     </section>

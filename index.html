@@ -5,7 +5,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PlayRift - Free Online Games</title>
+    <title>PlayRaft - Free Online Games</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
   <script type="importmap">
@@ -17,6 +20,28 @@
   }
 }
 </script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+        },
+        colors: {
+          'brand-dark': '#0F172A',
+          'brand-blue': '#1E3A8A',
+          'brand-card': '#111827',
+          'brand-accent': '#22D3EE',
+          'brand-text-primary': '#F9FAFB',
+          'brand-text-secondary': '#9CA3AF',
+        },
+        boxShadow: {
+          'glow': '0 0 15px 5px rgba(34, 211, 238, 0.25)',
+        }
+      },
+    },
+  }
+</script>
 <style>
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
@@ -25,16 +50,13 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .bg-poki-gradient {
-    background-color: #00a1ff;
-    background-image:
-      linear-gradient(135deg, rgba(2, 110, 188, 0.8) 0%, rgba(0, 161, 255, 0) 50%),
-      linear-gradient(45deg, rgba(0, 255, 159, 0.8) 0%, rgba(0, 255, 159, 0) 100%),
-      linear-gradient(90deg, #00ff9f, #00a1ff);
+  .bg-dark-gradient {
+    background-color: #1E3A8A;
+    background-image: linear-gradient(to bottom, #0F172A 0%, #1E3A8A 100%);
   }
 </style>
 </head>
-  <body class="bg-poki-gradient">
+  <body class="bg-dark-gradient font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

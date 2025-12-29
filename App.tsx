@@ -7,9 +7,15 @@ import CategorySection from './components/CategorySection';
 import SearchIcon from './components/icons/SearchIcon';
 import MosaicGameGrid from './components/MosaicGameGrid';
 import Logo from './components/Logo';
-import UserIcon from './components/icons/UserIcon';
+import Footer from './components/Footer';
+import AboutUs from './components/pages/AboutUs';
+import Contact from './components/pages/Contact';
+import PrivacyPolicy from './components/pages/PrivacyPolicy';
+import TermsOfService from './components/pages/TermsOfService';
 
-const CACHE_KEY = 'playrift_games_cache';
+const CACHE_KEY = 'playraft_games_cache';
+
+type Page = 'home' | 'about' | 'contact' | 'privacy' | 'terms';
 
 const getCachedGames = (): Game[] => {
   try {
@@ -20,12 +26,6 @@ const getCachedGames = (): Game[] => {
     return [];
   }
 };
-
-// Define a simple type for the user object
-interface CrazyGamesUser {
-  username: string;
-  // Add other user properties here if available
-}
 
 // Extend the Window interface for TypeScript to recognize the CrazyGames SDK
 declare global {
@@ -44,7 +44,7 @@ declare global {
           showRewardedAd: () => Promise<void>;
         };
         user: {
-          getUser: () => Promise<CrazyGamesUser | null>;
+          getUser: () => Promise<any | null>;
         };
       };
     };
@@ -73,7 +73,7 @@ const App: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [sdkInitialized, setSdkInitialized] = useState(false);
   const [sdkEnvironment, setSdkEnvironment] = useState<string | null>(null);
-  const [user, setUser] = useState<CrazyGamesUser | null>(null);
+  const [currentPage, setCurrentPage] = useState<Page>('home');
 
   // Initialize CrazyGames SDK on component mount
   useEffect(() => {
@@ -249,16 +249,6 @@ const App: React.FC = () => {
     setLoading(false);
   };
   
-  const handleGetUser = async () => {
-    if (!isSdkUsable) return;
-    try {
-      const fetchedUser = await window.CrazyGames.SDK.user.getUser();
-      setUser(fetchedUser);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-    }
-  };
-
   const featuredGames = useMemo(() => allGames.slice(0, FEATURED_GAMES_COUNT), [allGames]);
   const moreGames = useMemo(() => allGames.slice(FEATURED_GAMES_COUNT), [allGames]);
   const gamesByCategory = useMemo(() => {
@@ -275,76 +265,90 @@ const App: React.FC = () => {
     return categoryMap;
   }, [moreGames]);
 
-  const sdkButtonTitle = !isSdkUsable && sdkInitialized ? "CrazyGames SDK is not available on this domain." : "";
+  const renderHome = () => (
+    <>
+      <header className="flex justify-between items-center mb-6 flex-wrap gap-4">
+        <Logo />
+        <div className="flex items-center bg-brand-card/50 backdrop-blur-sm border border-white/10 rounded-2xl p-2 shadow-lg">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="p-3 rounded-xl hover:bg-brand-accent/20 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-accent"
+            aria-label="Open search"
+          >
+            <SearchIcon className="h-6 w-6 text-brand-text-primary" />
+          </button>
+        </div>
+      </header>
+
+      {loading && allGames.length === 0 ? (
+        <div className="flex justify-center items-center h-96">
+          <p className="text-2xl text-brand-text-primary font-semibold animate-pulse">Loading awesome games...</p>
+        </div>
+      ) : allGames.length > 0 ? (
+        <>
+          <div className="space-y-12">
+            <MosaicGameGrid games={featuredGames} onSelectGame={handleSelectGame} />
+            {CATEGORIES.map(category => {
+              const games = gamesByCategory.get(category);
+              if (games && games.length > 5) {
+                return <CategorySection key={category} title={category} games={games} onSelectGame={handleSelectGame} />;
+              }
+              return null;
+            })}
+          </div>
+          {moreGames.length > 0 && (
+            <div className="mt-12">
+              <MosaicGameGrid games={moreGames} onSelectGame={handleSelectGame} />
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex justify-center items-center h-96">
+          <p className="text-2xl text-brand-text-primary font-semibold">No games available right now.</p>
+        </div>
+      )}
+
+      <div className="text-center mt-12">
+        {loading && allGames.length > 0 && <p className="text-lg text-brand-text-primary font-semibold animate-pulse">Loading more games...</p>}
+        {!loading && hasMore && allGames.length > 0 && (
+          <button
+            onClick={handleLoadMore}
+            className="bg-brand-accent text-brand-dark font-bold py-3 px-8 rounded-full hover:bg-cyan-400 transition-transform transform hover:scale-105 duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-opacity-75"
+          >
+            Load More Games
+          </button>
+        )}
+        {!loading && !hasMore && allGames.length > FEATURED_GAMES_COUNT && (
+          <p className="text-lg text-brand-text-secondary font-semibold">You've reached the end of the list!</p>
+        )}
+      </div>
+    </>
+  );
+
+  const renderPage = () => {
+    switch(currentPage) {
+      case 'home':
+        return renderHome();
+      case 'about':
+        return <AboutUs onNavigate={setCurrentPage} />;
+      case 'contact':
+        return <Contact onNavigate={setCurrentPage} />;
+      case 'privacy':
+        return <PrivacyPolicy onNavigate={setCurrentPage} />;
+      case 'terms':
+        return <TermsOfService onNavigate={setCurrentPage} />;
+      default:
+        return renderHome();
+    }
+  }
 
   return (
-    <div className="min-h-screen font-sans text-gray-800">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
-          <Logo />
-          <div className="flex items-center gap-2 bg-white rounded-2xl p-2 shadow-md">
-            <button
-              onClick={handleGetUser}
-              className="p-3 rounded-xl hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="User login"
-              disabled={!isSdkUsable}
-              title={sdkButtonTitle}
-            >
-              <UserIcon className="h-6 w-6 text-gray-700" />
-            </button>
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="p-3 rounded-xl hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-              aria-label="Open search"
-            >
-              <SearchIcon className="h-6 w-6 text-gray-700" />
-            </button>
-          </div>
-        </header>
-
-        {loading && allGames.length === 0 ? (
-          <div className="flex justify-center items-center h-96">
-            <p className="text-2xl text-white font-semibold animate-pulse">Loading awesome games...</p>
-          </div>
-        ) : allGames.length > 0 ? (
-          <>
-            <div className="space-y-12">
-              <MosaicGameGrid games={featuredGames} onSelectGame={handleSelectGame} />
-              {CATEGORIES.map(category => {
-                const games = gamesByCategory.get(category);
-                if (games && games.length > 5) {
-                  return <CategorySection key={category} title={category} games={games} onSelectGame={handleSelectGame} />;
-                }
-                return null;
-              })}
-            </div>
-            {moreGames.length > 0 && (
-              <div className="mt-12">
-                <MosaicGameGrid games={moreGames} onSelectGame={handleSelectGame} />
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex justify-center items-center h-96">
-            <p className="text-2xl text-white font-semibold">No games available right now.</p>
-          </div>
-        )}
-
-        <div className="text-center mt-12">
-          {loading && allGames.length > 0 && <p className="text-lg text-white font-semibold animate-pulse">Loading more games...</p>}
-          {!loading && hasMore && allGames.length > 0 && (
-            <button
-              onClick={handleLoadMore}
-              className="bg-white text-blue-500 font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-transform transform hover:scale-105 duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-            >
-              Load More Games
-            </button>
-          )}
-          {!loading && !hasMore && allGames.length > FEATURED_GAMES_COUNT && (
-            <p className="text-lg text-white/80 font-semibold">You've reached the end of the list!</p>
-          )}
-        </div>
+    <div className="min-h-screen flex flex-col">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
+        {renderPage()}
       </main>
+
+      <Footer onNavigate={setCurrentPage} />
 
       {isSearchOpen && <SearchView games={allGames} onClose={() => setIsSearchOpen(false)} onSelectGame={handleSelectGame} />}
       {selectedGame && <GameView game={selectedGame} onClose={handleCloseGame} />}

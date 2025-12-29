@@ -26,14 +26,14 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
           <div className="flex items-center space-x-2">
             <button
               onClick={handleFullscreen}
-              className="p-2 rounded-full text-white bg-gray-700 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white transition-colors"
+              className="p-2 rounded-full text-white bg-gray-700 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-brand-accent transition-colors"
               aria-label="Enter fullscreen"
             >
               <FullscreenIcon className="w-6 h-6" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-full text-white bg-gray-700 hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white transition-colors"
+              className="p-2 rounded-full text-white bg-gray-700 hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-brand-accent transition-colors"
               aria-label="Close game"
             >
               <CloseIcon className="w-6 h-6" />
