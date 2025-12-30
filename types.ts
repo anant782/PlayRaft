@@ -5,4 +5,5 @@ export interface Game {
   thumbnailUrl: string;
   category: string;
   gameUrl: string;
+  description?: string;
 }

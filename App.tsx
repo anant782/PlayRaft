@@ -13,345 +13,233 @@ import Contact from './components/pages/Contact';
 import PrivacyPolicy from './components/pages/PrivacyPolicy';
 import TermsOfService from './components/pages/TermsOfService';
 
-const CACHE_KEY = 'playraft_games_cache';
+const CACHE_KEY = 'playraft_games_cache_v2';
 
-type Page = 'home' | 'about' | 'contact' | 'privacy' | 'terms';
+type View = 'home' | 'about' | 'contact' | 'privacy' | 'terms' | 'game';
 
 const getCachedGames = (): Game[] => {
   try {
     const item = window.localStorage.getItem(CACHE_KEY);
     return item ? JSON.parse(item) : [];
   } catch (error) {
-    console.error("Error reading from localStorage:", error);
     return [];
   }
 };
 
-// Extend the Window interface for TypeScript to recognize the CrazyGames SDK
-declare global {
-  interface Window {
-    CrazyGames: {
-      SDK: {
-        init: () => Promise<void>;
-        environment: 'local' | 'crazygames' | 'disabled';
-        game: {
-          loadingStart: () => void;
-          loadingStop: () => void;
-          gameplayStart: () => void;
-          gameplayStop: () => void;
-        };
-        ad: {
-          showRewardedAd: () => Promise<void>;
-        };
-        user: {
-          getUser: () => Promise<any | null>;
-        };
-      };
-    };
-  }
-}
-
-const FEATURED_GAMES_COUNT = 18; // Increased for a larger mosaic
-const CATEGORIES = ['Action', 'Adventure', 'Arcade', 'Puzzle', 'Racing', 'Sports', 'Strategy'];
-
-// Utility to shuffle an array
-const shuffleArray = (array: any[]) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-};
-
-
 const App: React.FC = () => {
   const [allGames, setAllGames] = useState<Game[]>(getCachedGames());
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(getCachedGames().length === 0);
-  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(allGames.length === 0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [sdkInitialized, setSdkInitialized] = useState(false);
-  const [sdkEnvironment, setSdkEnvironment] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [currentView, setCurrentView] = useState<View>('home');
+  const [hasMore, setHasMore] = useState(true);
 
-  // Initialize CrazyGames SDK on component mount
-  useEffect(() => {
-    const initializeSdk = async () => {
-      if (window.CrazyGames) {
-        try {
-          await window.CrazyGames.SDK.init();
-          setSdkInitialized(true);
-          
-          const urlParams = new URLSearchParams(window.location.search);
-          const forceEnv = urlParams.get('force_env');
-          let currentEnv: 'local' | 'crazygames' | 'disabled' = window.CrazyGames.SDK.environment;
-
-          if (forceEnv === 'crazygames' || forceEnv === 'local') {
-            console.warn(`DEVELOPER OVERRIDE: Forcing SDK environment to '${forceEnv}'`);
-            currentEnv = forceEnv;
-          }
-
-          setSdkEnvironment(currentEnv);
-          console.log('CrazyGames SDK Initialized. Effective Environment:', currentEnv);
-        } catch (error) {
-          console.error('Failed to initialize CrazyGames SDK:', error);
-        }
-      } else {
-          setTimeout(initializeSdk, 500);
-      }
-    };
-    initializeSdk();
-  }, []);
-  
-  const isSdkUsable = sdkInitialized && sdkEnvironment !== 'disabled';
-
-  const fetchGamePixGames = useCallback(async (pageNum: number) => {
+  const fetchGames = useCallback(async (pageNum: number) => {
     try {
       const response = await fetch(`https://feeds.gamepix.com/v2/json?sid=224NQ&pagination=48&page=${pageNum}`);
-      if (!response.ok) throw new Error('GamePix Network response was not ok');
+      if (!response.ok) throw new Error('Network error');
       const result = await response.json();
-      const newGames: Game[] = (result.items || []).map((game: any) => ({
+      
+      const newGames: Game[] = (result?.items || []).map((game: any) => ({
         id: `gp_${game.id}`,
-        title: game.title,
-        thumbnailUrl: game.banner_image,
-        category: game.category,
-        gameUrl: game.url,
+        title: game.title || 'Untitled Game',
+        thumbnailUrl: game.banner_image || game.thumbnail_url || '',
+        category: game.category || 'General',
+        gameUrl: game.url || '',
+        description: game.description || `Experience the ultimate ${game.category || 'online'} adventure in ${game.title || 'this game'}. Play directly in your browser with no downloads required! High-quality graphics and smooth gameplay await in this trending title on PlayRaft.`,
       }));
-      return { games: newGames, hasMore: !!result.next_url && newGames.length > 0 };
-    } catch (error) {
-      console.error("Failed to fetch GamePix games:", error);
+      return { games: newGames, hasMore: !!result?.next_url };
+    } catch (e) {
+      console.error('Fetch error:', e);
       return { games: [], hasMore: false };
     }
   }, []);
 
-  const fetchGamePushGames = useCallback(async () => {
-    try {
-        const query = `
-            query Games {
-                games(limit: 50, sort: "popularity") {
-                    id
-                    name
-                    url
-                    image
-                    tags { name }
-                }
-            }
-        `;
-        const response = await fetch('https://api.gamepush.com/gs/api/graphql', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query }),
-        });
-        if (!response.ok) throw new Error('GamePush Network response was not ok');
-        const result = await response.json();
-        const newGames: Game[] = (result.data.games || []).map((game: any) => ({
-            id: `gph_${game.id}`,
-            title: game.name,
-            thumbnailUrl: game.image,
-            category: game.tags.length > 0 ? game.tags[0].name : 'General',
-            gameUrl: game.url,
-        }));
-        return newGames;
-    } catch (error) {
-        console.error("Failed to fetch GamePush games:", error);
-        return [];
-    }
-  }, []);
-
-  const loadInitialGames = useCallback(async (environment: string | null) => {
-    const gamePixPromise = fetchGamePixGames(1);
-    
-    let combinedGames: Game[] = [];
-    let gamePixHasMore = false;
-
-    if (environment === 'crazygames') {
-        const gamePushPromise = fetchGamePushGames();
-        const [gamePixResult, gamePushResult] = await Promise.all([gamePixPromise, gamePushPromise]);
-        combinedGames = shuffleArray([...gamePixResult.games, ...gamePushResult]);
-        gamePixHasMore = gamePixResult.hasMore;
-    } else {
-        const gamePixResult = await gamePixPromise;
-        combinedGames = gamePixResult.games;
-        gamePixHasMore = gamePixResult.hasMore;
-    }
-
-    const uniqueGameIds = new Set();
-    const uniqueGames = combinedGames.filter(game => {
-      if (uniqueGameIds.has(game.id)) return false;
-      uniqueGameIds.add(game.id);
-      return true;
-    });
-
-    if (uniqueGames.length > 0) {
-      setAllGames(uniqueGames);
-      try {
-        window.localStorage.setItem(CACHE_KEY, JSON.stringify(uniqueGames));
-      } catch (error) {
-        console.error("Error writing to localStorage:", error);
+  const syncRoute = useCallback(() => {
+    const path = window.location.pathname;
+    if (path === '/' || path === '/home') {
+      setCurrentView('home');
+      setSelectedGame(null);
+    } else if (path === '/about') {
+      setCurrentView('about');
+      setSelectedGame(null);
+    } else if (path === '/contact') {
+      setCurrentView('contact');
+      setSelectedGame(null);
+    } else if (path === '/privacy') {
+      setCurrentView('privacy');
+      setSelectedGame(null);
+    } else if (path === '/terms') {
+      setCurrentView('terms');
+      setSelectedGame(null);
+    } else if (path.startsWith('/game/')) {
+      const gameId = path.split('/game/')[1];
+      const found = allGames.find(g => g.id === gameId);
+      if (found) {
+        setSelectedGame(found);
+        setCurrentView('game');
+      } else {
+        // If not found yet, we set the view to game but it might show loading
+        setCurrentView('game');
       }
     }
-    setHasMore(gamePixHasMore);
-    setPage(1);
-    setLoading(false);
-  }, [fetchGamePixGames, fetchGamePushGames]);
+  }, [allGames]);
+
+  const navigate = (view: View, game?: Game) => {
+    let path = '/';
+    if (view === 'game' && game) {
+      path = `/game/${game.id}`;
+      setSelectedGame(game);
+    } else if (view !== 'home') {
+      path = `/${view}`;
+      setSelectedGame(null);
+    } else {
+      setSelectedGame(null);
+    }
+
+    try {
+      window.history.pushState({}, '', path);
+    } catch (e) {
+      console.error('Navigation error:', e);
+    }
+    setCurrentView(view);
+    window.scrollTo(0, 0);
+  };
 
   useEffect(() => {
-    if (sdkInitialized) {
-        loadInitialGames(sdkEnvironment);
-    }
-  }, [sdkInitialized, sdkEnvironment, loadInitialGames]);
+    syncRoute();
+    window.addEventListener('popstate', syncRoute);
+    return () => window.removeEventListener('popstate', syncRoute);
+  }, [syncRoute]);
 
-  const handleSelectGame = (game: Game) => {
-    if (isSdkUsable) {
-      try {
-        window.CrazyGames.SDK.game.gameplayStart();
-      } catch (error) {
-        console.error('CrazyGames SDK error on gameplayStart:', error);
-      }
-    }
-    setSelectedGame(game);
-    setIsSearchOpen(false);
-  };
-
-  const handleCloseGame = () => {
-    if (isSdkUsable) {
-      try {
-        window.CrazyGames.SDK.game.gameplayStop();
-      } catch (error) {
-          console.error('CrazyGames SDK error on gameplayStop:', error);
-      }
-    }
-    setSelectedGame(null);
-  };
-
-  const handleLoadMore = async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-    const nextPage = page + 1;
-    const { games: newGames, hasMore: newHasMore } = await fetchGamePixGames(nextPage);
-
-    if (newGames.length > 0) {
-      setAllGames(prev => {
-        const existingGameIds = new Set(prev.map(g => g.id));
-        const uniqueNewGames = newGames.filter(g => !existingGameIds.has(g.id));
-        const updatedGames = [...prev, ...uniqueNewGames];
+  useEffect(() => {
+    const loadInitial = async () => {
+      const { games, hasMore: more } = await fetchGames(1);
+      if (games && games.length > 0) {
+        setAllGames(games);
         try {
-          window.localStorage.setItem(CACHE_KEY, JSON.stringify(updatedGames));
-        } catch (error) {
-          console.error("Error updating localStorage", error);
+          window.localStorage.setItem(CACHE_KEY, JSON.stringify(games));
+        } catch (e) {
+          console.warn('LocalStorage error:', e);
         }
-        return updatedGames;
-      });
-      setPage(nextPage);
-    }
-    setHasMore(newHasMore);
-    setLoading(false);
-  };
-  
-  const featuredGames = useMemo(() => allGames.slice(0, FEATURED_GAMES_COUNT), [allGames]);
-  const moreGames = useMemo(() => allGames.slice(FEATURED_GAMES_COUNT), [allGames]);
-  const gamesByCategory = useMemo(() => {
-    const categoryMap = new Map<string, Game[]>();
-    moreGames.forEach(game => { 
-      if (game.category) {
-        const matchedCategory = CATEGORIES.find(c => game.category.toLowerCase().includes(c.toLowerCase()));
-        if (matchedCategory) {
-          if (!categoryMap.has(matchedCategory)) categoryMap.set(matchedCategory, []);
-          categoryMap.get(matchedCategory)!.push(game);
+        
+        const path = window.location.pathname;
+        if (path.startsWith('/game/')) {
+          const gameId = path.split('/game/')[1];
+          const found = games.find(g => g.id === gameId);
+          if (found) {
+            setSelectedGame(found);
+            setCurrentView('game');
+          }
         }
       }
-    });
-    return categoryMap;
-  }, [moreGames]);
+      setHasMore(more);
+      setLoading(false);
+    };
+    loadInitial();
+  }, [fetchGames]);
 
-  const renderHome = () => (
-    <>
-      <header className="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <Logo />
-        <div className="flex items-center bg-brand-card/50 backdrop-blur-sm border border-white/10 rounded-2xl p-2 shadow-lg">
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="p-3 rounded-xl hover:bg-brand-accent/20 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-accent"
-            aria-label="Open search"
-          >
-            <SearchIcon className="h-6 w-6 text-brand-text-primary" />
-          </button>
+  useEffect(() => {
+    const initSdk = async () => {
+      const win = window as any;
+      if (win?.CrazyGames?.SDK?.init) {
+        try {
+          await win.CrazyGames.SDK.init();
+        } catch (e) { 
+          console.debug('CrazyGames SDK init skipped or failed'); 
+        }
+      }
+    };
+    initSdk();
+  }, []);
+
+  const featuredGames = useMemo(() => allGames.slice(0, 18), [allGames]);
+  const moreGames = useMemo(() => allGames.slice(18), [allGames]);
+
+  const renderContent = () => {
+    if (loading && currentView === 'home') {
+      return (
+        <div className="flex flex-col justify-center items-center h-[60vh]">
+          <div className="w-16 h-16 border-4 border-brand-accent border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-xl text-brand-text-primary font-semibold">Preparing your raft...</p>
         </div>
-      </header>
-
-      {loading && allGames.length === 0 ? (
-        <div className="flex justify-center items-center h-96">
-          <p className="text-2xl text-brand-text-primary font-semibold animate-pulse">Loading awesome games...</p>
-        </div>
-      ) : allGames.length > 0 ? (
-        <>
-          <div className="space-y-12">
-            <MosaicGameGrid games={featuredGames} onSelectGame={handleSelectGame} />
-            {CATEGORIES.map(category => {
-              const games = gamesByCategory.get(category);
-              if (games && games.length > 5) {
-                return <CategorySection key={category} title={category} games={games} onSelectGame={handleSelectGame} />;
-              }
-              return null;
-            })}
-          </div>
-          {moreGames.length > 0 && (
-            <div className="mt-12">
-              <MosaicGameGrid games={moreGames} onSelectGame={handleSelectGame} />
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="flex justify-center items-center h-96">
-          <p className="text-2xl text-brand-text-primary font-semibold">No games available right now.</p>
-        </div>
-      )}
-
-      <div className="text-center mt-12">
-        {loading && allGames.length > 0 && <p className="text-lg text-brand-text-primary font-semibold animate-pulse">Loading more games...</p>}
-        {!loading && hasMore && allGames.length > 0 && (
-          <button
-            onClick={handleLoadMore}
-            className="bg-brand-accent text-brand-dark font-bold py-3 px-8 rounded-full hover:bg-cyan-400 transition-transform transform hover:scale-105 duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-opacity-75"
-          >
-            Load More Games
-          </button>
-        )}
-        {!loading && !hasMore && allGames.length > FEATURED_GAMES_COUNT && (
-          <p className="text-lg text-brand-text-secondary font-semibold">You've reached the end of the list!</p>
-        )}
-      </div>
-    </>
-  );
-
-  const renderPage = () => {
-    switch(currentPage) {
-      case 'home':
-        return renderHome();
-      case 'about':
-        return <AboutUs onNavigate={setCurrentPage} />;
-      case 'contact':
-        return <Contact onNavigate={setCurrentPage} />;
-      case 'privacy':
-        return <PrivacyPolicy onNavigate={setCurrentPage} />;
-      case 'terms':
-        return <TermsOfService onNavigate={setCurrentPage} />;
-      default:
-        return renderHome();
+      );
     }
-  }
+
+    switch (currentView) {
+      case 'about': return <AboutUs onNavigate={(v) => navigate(v as View)} />;
+      case 'contact': return <Contact onNavigate={(v) => navigate(v as View)} />;
+      case 'privacy': return <PrivacyPolicy onNavigate={(v) => navigate(v as View)} />;
+      case 'terms': return <TermsOfService onNavigate={(v) => navigate(v as View)} />;
+      case 'game': 
+        if (!selectedGame && loading) {
+           return (
+            <div className="flex flex-col justify-center items-center h-[60vh]">
+              <div className="w-16 h-16 border-4 border-brand-accent border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-xl text-brand-text-primary font-semibold">Loading game details...</p>
+            </div>
+          );
+        }
+        return selectedGame ? (
+          <GameView game={selectedGame} onClose={() => navigate('home')} />
+        ) : (
+          <div className="text-center py-20 animate-fade-in">
+            <h2 className="text-2xl text-brand-text-primary font-bold">Game not found</h2>
+            <p className="text-brand-text-secondary mt-2">The game you are looking for doesn't exist or has moved.</p>
+            <button onClick={() => navigate('home')} className="mt-6 bg-brand-accent text-brand-dark px-6 py-2 rounded-full font-bold hover:scale-105 transition-transform">Back to Home</button>
+          </div>
+        );
+      default:
+        return (
+          <div className="animate-fade-in">
+            <header className="flex justify-between items-center mb-10 flex-wrap gap-4">
+              <Logo onClick={() => navigate('home')} />
+              <div className="flex items-center bg-brand-card/50 backdrop-blur-sm border border-white/10 rounded-2xl p-2 shadow-lg">
+                <button 
+                  onClick={() => setIsSearchOpen(true)} 
+                  className="p-3 rounded-xl hover:bg-brand-accent/20 transition-colors group flex items-center gap-2"
+                >
+                  <SearchIcon className="h-6 w-6 text-brand-text-primary group-hover:text-brand-accent transition-colors" />
+                  <span className="hidden sm:inline text-brand-text-primary font-medium">Search games...</span>
+                </button>
+              </div>
+            </header>
+            <div className="space-y-16">
+              <section>
+                <h2 className="text-3xl font-extrabold text-brand-text-primary mb-6">Featured Games</h2>
+                <MosaicGameGrid games={featuredGames} onSelectGame={(g) => navigate('game', g)} />
+              </section>
+
+              <CategorySection title="Action" games={allGames.filter(g => g.category === 'Action')} onSelectGame={(g) => navigate('game', g)} />
+              
+              <section>
+                <h2 className="text-2xl font-bold mb-6 text-brand-text-primary">New Releases</h2>
+                <MosaicGameGrid games={moreGames.slice(0, 18)} onSelectGame={(g) => navigate('game', g)} />
+              </section>
+
+              <CategorySection title="Puzzle" games={allGames.filter(g => g.category === 'Puzzle')} onSelectGame={(g) => navigate('game', g)} />
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col selection:bg-brand-accent selection:text-brand-dark overflow-x-hidden">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
-        {renderPage()}
+        {renderContent()}
       </main>
-
-      <Footer onNavigate={setCurrentPage} />
-
-      {isSearchOpen && <SearchView games={allGames} onClose={() => setIsSearchOpen(false)} onSelectGame={handleSelectGame} />}
-      {selectedGame && <GameView game={selectedGame} onClose={handleCloseGame} />}
+      <Footer onNavigate={(v) => navigate(v as View)} />
+      {isSearchOpen && (
+        <SearchView 
+          games={allGames} 
+          onClose={() => setIsSearchOpen(false)} 
+          onSelectGame={(g) => {
+            setIsSearchOpen(false);
+            navigate('game', g);
+          }} 
+        />
+      )}
     </div>
   );
 };

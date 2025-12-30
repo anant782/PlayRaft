@@ -17,24 +17,25 @@ const GameCard: React.FC<GameCardProps> = ({ game, onSelectGame, className = '',
       onClick={() => onSelectGame(game)}
       onKeyPress={(e) => e.key === 'Enter' && onSelectGame(game)}
       tabIndex={0}
-      aria-label={`Play ${game.title}`}
+      aria-label={`Play ${game?.title || 'Game'}`}
     >
-      <div className="relative w-full h-full overflow-hidden rounded-2xl bg-brand-card shadow-lg transition-all duration-300 group-hover:shadow-glow group-hover:scale-105">
+      <div className="relative w-full h-full overflow-hidden rounded-2xl bg-brand-card shadow-lg transition-all duration-300 group-hover:shadow-glow group-hover:scale-[1.02] border border-white/5">
         <img 
-          src={game.thumbnailUrl} 
-          alt={game.title} 
-          className="w-full h-full object-cover transition-all duration-300 group-hover:filter group-hover:brightness-50" 
+          src={game?.thumbnailUrl || ''} 
+          alt={game?.title || 'Game Thumbnail'} 
+          loading="lazy"
+          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-50" 
         />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="bg-brand-accent text-brand-dark font-bold py-2 px-4 rounded-full flex items-center gap-2 transform group-hover:scale-100 scale-90 transition-transform duration-300 pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
+          <div className="bg-brand-accent text-brand-dark font-black py-2 px-5 rounded-full flex items-center gap-2 transform group-hover:scale-100 scale-90 transition-transform duration-300 shadow-xl">
              <PlayIcon className="w-5 h-5" />
-             <span>Play Now</span>
+             <span className="text-xs uppercase tracking-tighter">Play Now</span>
           </div>
         </div>
       </div>
       {showTitle && (
-        <h3 className="mt-2 text-sm font-semibold text-brand-text-primary truncate transition-colors duration-300 group-hover:text-brand-accent">
-          {game.title}
+        <h3 className="mt-3 text-sm font-bold text-brand-text-primary truncate transition-colors duration-300 group-hover:text-brand-accent px-1">
+          {game?.title || 'Untitled'}
         </h3>
       )}
     </div>

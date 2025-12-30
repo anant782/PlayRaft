@@ -5,57 +5,86 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PlayRaft - Free Online Games</title>
+    <title>PlayRaft - Play Free Online Games | Best Games Portal</title>
+    <meta name="description" content="PlayRaft is your destination for the best free online games. Action, puzzles, racing, and more. No downloads required, play directly in your browser!" />
+    <meta name="keywords" content="free games, online games, browser games, PlayRaft, action games, puzzle games" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://playraft.com/" />
+    <meta property="og:title" content="PlayRaft - Play Free Online Games" />
+    <meta property="og:description" content="Discover thousands of free online games on PlayRaft. Smooth gameplay and no downloads!" />
+    <meta property="og:image" content="/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://playraft.com/" />
+    <meta property="twitter:title" content="PlayRaft - Play Free Online Games" />
+    <meta property="twitter:description" content="Discover thousands of free online games on PlayRaft. Smooth gameplay and no downloads!" />
+    <meta property="twitter:image" content="/og-image.png" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PlayRaft",
+      "url": "https://playraft.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://playraft.com/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['Inter', 'sans-serif'],
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react": "https://esm.sh/react@^19.2.3",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+      }
+    }
+    </script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              'brand-dark': '#0F172A',
+              'brand-blue': '#1E3A8A',
+              'brand-card': '#111827',
+              'brand-accent': '#22D3EE',
+              'brand-text-primary': '#F9FAFB',
+              'brand-text-secondary': '#9CA3AF',
+            },
+            boxShadow: {
+              'glow': '0 0 15px 5px rgba(34, 211, 238, 0.25)',
+            }
+          },
         },
-        colors: {
-          'brand-dark': '#0F172A',
-          'brand-blue': '#1E3A8A',
-          'brand-card': '#111827',
-          'brand-accent': '#22D3EE',
-          'brand-text-primary': '#F9FAFB',
-          'brand-text-secondary': '#9CA3AF',
-        },
-        boxShadow: {
-          'glow': '0 0 15px 5px rgba(34, 211, 238, 0.25)',
-        }
-      },
-    },
-  }
-</script>
-<style>
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .bg-dark-gradient {
-    background-color: #1E3A8A;
-    background-image: linear-gradient(to bottom, #0F172A 0%, #1E3A8A 100%);
-  }
-</style>
-</head>
+      }
+    </script>
+    <style>
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      .bg-dark-gradient {
+        background-color: #1E3A8A;
+        background-image: linear-gradient(to bottom, #0F172A 0%, #1E3A8A 100%);
+      }
+      .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+  </head>
   <body class="bg-dark-gradient font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
