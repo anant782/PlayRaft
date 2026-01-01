@@ -1,16 +1,7 @@
 
 import React from 'react';
-import { Game } from '../types';
-import GameCard from './GameCard';
 
-interface MosaicGameGridProps {
-  games: Game[];
-  onSelectGame: (game: Game) => void;
-  isFeatured?: boolean;
-}
-
-// A new, longer, and more irregular layout pattern for a 6-column grid.
-// This creates a much more dynamic and visually appealing mosaic with high contrast.
+// This layout must match the one in MosaicGameGrid.tsx to prevent CLS
 const layoutClasses = [
   'lg:col-span-2 lg:row-span-2', // 1. Large
   'lg:col-span-1 lg:row-span-1', // 2. Small
@@ -34,23 +25,20 @@ const layoutClasses = [
   'lg:col-span-1 lg:row-span-1', // 20. Small
 ];
 
-const MosaicGameGrid: React.FC<MosaicGameGridProps> = ({ games, onSelectGame, isFeatured = false }) => {
-  if (!games || games.length === 0) return null;
+const SkeletonCard: React.FC<{ className?: string }> = ({ className }) => (
+  <div className={className}>
+    <div className="w-full h-full bg-brand-card/50 rounded-2xl animate-pulse"></div>
+  </div>
+);
 
+const MosaicGameGridSkeleton: React.FC<{ gameCount: number }> = ({ gameCount }) => {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {games.map((game, index) => (
-        <GameCard
-          key={game.id}
-          game={game}
-          onSelectGame={onSelectGame}
-          className={layoutClasses[index % layoutClasses.length]}
-          showTitle={false}
-          isFeatured={isFeatured}
-        />
+      {Array.from({ length: gameCount }).map((_, index) => (
+        <SkeletonCard key={index} className={layoutClasses[index % layoutClasses.length]} />
       ))}
     </div>
   );
 };
 
-export default MosaicGameGrid;
+export default MosaicGameGridSkeleton;

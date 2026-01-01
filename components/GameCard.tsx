@@ -8,9 +8,10 @@ interface GameCardProps {
   onSelectGame: (game: Game) => void;
   className?: string;
   showTitle?: boolean;
+  isFeatured?: boolean;
 }
 
-const GameCard: React.FC<GameCardProps> = ({ game, onSelectGame, className = '', showTitle = true }) => {
+const GameCard: React.FC<GameCardProps> = ({ game, onSelectGame, className = '', showTitle = true, isFeatured = false }) => {
   return (
     <div 
       className={`group cursor-pointer ${className}`}
@@ -22,8 +23,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, onSelectGame, className = '',
       <div className="relative w-full h-full overflow-hidden rounded-2xl bg-brand-card shadow-lg transition-all duration-300 group-hover:shadow-glow-lg group-hover:-translate-y-1 border border-white/10">
         <img 
           src={game?.thumbnailUrl || ''} 
-          alt={game?.title || 'Game Thumbnail'} 
-          loading="lazy"
+          alt={game?.title ? `Cover art for ${game.title}` : 'Game thumbnail'} 
+          loading={isFeatured ? 'eager' : 'lazy'}
+          fetchpriority={isFeatured ? 'high' : 'auto'}
+          width="512"
+          height="288"
           className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-75" 
         />
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30">

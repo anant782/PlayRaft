@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import PageWrapper from './PageWrapper';
-import { supabase } from '../../supabase';
 
 type Page = 'home' | 'about' | 'contact' | 'privacy' | 'terms';
 
@@ -17,35 +16,15 @@ const SitemapGenerator: React.FC<SitemapGeneratorProps> = ({ onNavigate }) => {
     const generateSitemap = async () => {
         setIsLoading(true);
         setSitemapXml('');
-        setProgress('Starting process... Fetching game URLs from database.');
+        setProgress('Starting process...');
 
-        const allGameIds: string[] = [];
-        const BATCH_SIZE = 1000;
-        let offset = 0;
-        let hasMore = true;
         const baseUrl = window.location.origin;
 
         try {
-            while(hasMore) {
-                setProgress(`Fetching games from database... Found ${allGameIds.length} games so far.`);
-                const { data, error } = await supabase
-                    .from('sitemap_games')
-                    .select('game_id')
-                    .range(offset, offset + BATCH_SIZE - 1);
-                
-                if (error) throw error;
-
-                if (data && data.length > 0) {
-                    allGameIds.push(...data.map(item => item.game_id));
-                    offset += data.length;
-                }
-                
-                if (!data || data.length < BATCH_SIZE) {
-                    hasMore = false;
-                }
-            }
-
-            setProgress(`Found a total of ${allGameIds.length} games. Generating XML...`);
+            // Dynamic game IDs are no longer fetched as the backend service is removed.
+            const allGameIds: string[] = [];
+            
+            setProgress(`Generating XML for static pages. Dynamic game URL fetching is disabled.`);
             
             const today = new Date().toISOString().split('T')[0];
             const staticPages = [
@@ -80,7 +59,7 @@ const SitemapGenerator: React.FC<SitemapGeneratorProps> = ({ onNavigate }) => {
             xml += `</urlset>`;
 
             setSitemapXml(xml);
-            setProgress(`Sitemap generated for ${allGameIds.length} games! Copy the content and save it as public/sitemap.xml`);
+            setProgress(`Sitemap generated for static pages only. Copy the content and save it as public/sitemap.xml`);
         } catch (error) {
             const err = error as Error;
             setProgress(`An error occurred: ${err.message}.`);
@@ -102,7 +81,7 @@ const SitemapGenerator: React.FC<SitemapGeneratorProps> = ({ onNavigate }) => {
     return (
         <PageWrapper title="Sitemap Generator" onNavigate={onNavigate}>
             <p className="mb-4">
-                This tool will fetch all game URLs that have been visited on your site from the database and generate a `sitemap.xml` file.
+                This tool will generate a `sitemap.xml` file for the static pages of this site.
             </p>
             <p className="mb-6">
                 After generation, copy the text and replace the content of the `public/sitemap.xml` file in your project.
@@ -116,7 +95,7 @@ const SitemapGenerator: React.FC<SitemapGeneratorProps> = ({ onNavigate }) => {
                 {isLoading ? 'Generating...' : 'Generate Sitemap'}
             </button>
             
-            {(isLoading || sitemapXml) && (
+            {(isLoading || sitemapXml || progress) && (
                  <div className="mt-6 p-4 bg-brand-dark/50 rounded-lg">
                     <p className="text-sm font-semibold text-brand-text-secondary">{progress}</p>
                  </div>

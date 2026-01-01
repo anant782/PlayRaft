@@ -5,7 +5,6 @@ import CloseIcon from './icons/CloseIcon';
 import FullscreenIcon from './icons/FullscreenIcon';
 import PlayIcon from './icons/PlayIcon';
 import ArrowLeftIcon from './icons/ArrowLeftIcon';
-import { supabase } from '../supabase';
 
 interface GameViewProps {
   game: Game;
@@ -23,20 +22,10 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
       document.title = `${game.title} - Play Free Online on PlayRaft`;
     }
 
-    // When a game is viewed, add its ID to our sitemap table for automatic generation.
-    if (game?.id) {
-      const updateSitemap = async () => {
-        await supabase
-          .from('sitemap_games')
-          .insert({ game_id: game.id });
-      };
-      updateSitemap();
-    }
-
     return () => {
       document.title = originalTitle;
     };
-  }, [game?.title, game?.id]);
+  }, [game?.title]);
 
   const handleFullscreen = () => {
     const el = iframeRef.current;
@@ -51,7 +40,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
         (el as any).msRequestFullscreen();
       }
     } catch (e) {
-      // Suppress fullscreen errors
+      // Fullscreen not supported or blocked
     }
   };
 
@@ -83,7 +72,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <img 
                   src={game.thumbnailUrl || ''} 
-                  alt={game.title || 'Game'} 
+                  alt={game.title ? `Blurred background for ${game.title}` : 'Blurred game background'} 
                   className="absolute inset-0 w-full h-full object-cover blur-[2px] opacity-40"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-dark to-transparent opacity-80" />
@@ -172,7 +161,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
            <div className="rounded-3xl overflow-hidden border border-white/10">
               <img 
                 src={game.thumbnailUrl || ''} 
-                alt="Game Banner" 
+                alt={game.title ? `Cover art for ${game.title}` : 'Game thumbnail'} 
                 className="w-full object-cover"
               />
            </div>

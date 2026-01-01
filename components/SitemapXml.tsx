@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabase';
 
 const SITEMAP_CACHE_KEY = 'playraft_sitemap_cache_v1';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -21,29 +20,8 @@ const SitemapXml: React.FC = () => {
           }
         }
 
-        // Fetch from Supabase if cache is stale or missing
+        // Dynamic game IDs are no longer fetched as the backend service is removed.
         const allGameIds: string[] = [];
-        const BATCH_SIZE = 1000;
-        let offset = 0;
-        let hasMore = true;
-
-        while (hasMore) {
-          const { data, error } = await supabase
-            .from('sitemap_games')
-            .select('game_id')
-            .range(offset, offset + BATCH_SIZE - 1);
-
-          if (error) throw error;
-          
-          if (data && data.length > 0) {
-            allGameIds.push(...data.map(item => item.game_id));
-            offset += data.length;
-          }
-          
-          if (!data || data.length < BATCH_SIZE) {
-            hasMore = false;
-          }
-        }
 
         const baseUrl = window.location.origin;
         const today = new Date().toISOString().split('T')[0];

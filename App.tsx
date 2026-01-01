@@ -14,12 +14,11 @@ import PrivacyPolicy from './components/pages/PrivacyPolicy';
 import TermsOfService from './components/pages/TermsOfService';
 import SitemapGenerator from './components/pages/SitemapGenerator';
 import SitemapXml from './components/SitemapXml';
-import { supabase } from './supabase';
+import MosaicGameGridSkeleton from './components/MosaicGameGridSkeleton';
 
 const CACHE_KEY = 'playraft_games_cache_v2';
 
 type View = 'home' | 'about' | 'contact' | 'privacy' | 'terms' | 'game' | 'sitemap';
-type SupabaseStatus = 'checking' | 'connected' | 'error';
 
 const getCachedGames = (): Game[] => {
   try {
@@ -40,9 +39,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(allGames.length === 0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [currentView, setCurrentView] = useState<View>('home');
-  const [supabaseStatus, setSupabaseStatus] = useState<SupabaseStatus>('checking');
   
-  const [currentPage, setCurrentPage] = useState(3);
+  const [currentPage, setCurrentPage] = useState(2);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -80,7 +78,7 @@ const App: React.FC = () => {
         try {
             window.localStorage.setItem(CACHE_KEY, JSON.stringify(updatedGames));
         } catch (e) {
-            // Suppress localStorage errors
+            // Could not write to localStorage
         }
         return updatedGames;
       });
@@ -129,7 +127,7 @@ const App: React.FC = () => {
     try {
       window.history.pushState({}, '', path);
     } catch (e) {
-      // Suppress navigation errors
+      // Could not use history.pushState
     }
     setCurrentView(view);
     window.scrollTo(0, 0);
@@ -144,13 +142,12 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadInitial = async () => {
       setLoading(true);
-      const [page1, page2, page3] = await Promise.all([
+      const [page1, page2] = await Promise.all([
         fetchGames(1),
         fetchGames(2),
-        fetchGames(3),
       ]);
       
-      const combinedGames = [...(page1.games || []), ...(page2.games || []), ...(page3.games || [])];
+      const combinedGames = [...(page1.games || []), ...(page2.games || [])];
       const uniqueGames = Array.from(new Map(combinedGames.map(item => [item.id, item])).values());
 
       if (uniqueGames.length > 0) {
@@ -158,7 +155,7 @@ const App: React.FC = () => {
         try {
           window.localStorage.setItem(CACHE_KEY, JSON.stringify(uniqueGames));
         } catch (e) {
-          // Suppress localStorage errors
+          // Could not write to localStorage
         }
         
         const path = window.location.pathname;
@@ -171,7 +168,7 @@ const App: React.FC = () => {
           }
         }
       }
-      setHasMore(page3.hasMore);
+      setHasMore(page2.hasMore);
       setLoading(false);
     };
     if (allGames.length === 0) {
@@ -186,36 +183,38 @@ const App: React.FC = () => {
         try {
           await win.CrazyGames.SDK.init();
         } catch (e) { 
-          // Suppress SDK init errors
+          // CrazyGames SDK failed to initialize
         }
       }
     };
-    const checkSupabaseConnection = async () => {
-      // A lightweight query to check if the connection and table access are working.
-      const { error } = await supabase
-        .from('sitemap_games')
-        .select('game_id', { count: 'exact', head: true });
-      
-      if (error) {
-        setSupabaseStatus('error');
-      } else {
-        setSupabaseStatus('connected');
-      }
-    };
-
+    
     initSdk();
-    checkSupabaseConnection();
   }, []);
 
   const featuredGames = useMemo(() => allGames.slice(0, 18), [allGames]);
-  const moreGames = useMemo(() => allGames.slice(18, 36), [allGames]);
 
   const renderContent = () => {
-    if (loading && currentView === 'home') {
+    if (currentView === 'home' && loading) {
       return (
-        <div className="flex flex-col justify-center items-center h-[60vh]">
-          <div className="w-16 h-16 border-4 border-brand-accent border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-xl text-brand-text-primary font-semibold">Preparing your raft...</p>
+        <div>
+          <header className="flex justify-between items-center mb-12 flex-wrap gap-4">
+            <Logo onClick={() => navigate('home')} />
+            <div className="flex items-center bg-brand-card/70 backdrop-blur-lg border border-white/10 rounded-full p-1 shadow-lg">
+              <button 
+                onClick={() => setIsSearchOpen(true)} 
+                className="p-3 rounded-full hover:bg-brand-accent/20 transition-colors group flex items-center gap-2"
+              >
+                <SearchIcon className="h-6 w-6 text-brand-text-secondary group-hover:text-brand-accent transition-colors" />
+                <span className="hidden sm:inline text-brand-text-primary font-medium pr-2">Search...</span>
+              </button>
+            </div>
+          </header>
+          <div className="space-y-20">
+            <section>
+              <h1 className="text-4xl font-black text-brand-text-primary mb-8 tracking-tighter">Featured Games</h1>
+              <MosaicGameGridSkeleton gameCount={18} />
+            </section>
+          </div>
         </div>
       );
     }
@@ -261,8 +260,8 @@ const App: React.FC = () => {
             </header>
             <div className="space-y-20">
               <section>
-                <h2 className="text-4xl font-black text-brand-text-primary mb-8 tracking-tighter">Featured Games</h2>
-                <MosaicGameGrid games={featuredGames} onSelectGame={(g) => navigate('game', g)} />
+                <h1 className="text-4xl font-black text-brand-text-primary mb-8 tracking-tighter">Featured Games</h1>
+                <MosaicGameGrid games={featuredGames} onSelectGame={(g) => navigate('game', g)} isFeatured />
               </section>
 
               <CategorySection title="Action" games={allGames.filter(g => g.category === 'Action')} onSelectGame={(g) => navigate('game', g)} />
@@ -311,7 +310,7 @@ const App: React.FC = () => {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
         {renderContent()}
       </main>
-      <Footer onNavigate={(v) => navigate(v as View)} supabaseStatus={supabaseStatus} />
+      <Footer onNavigate={(v) => navigate(v as View)} />
       {isSearchOpen && (
         <SearchView 
           games={allGames} 
