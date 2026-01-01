@@ -13,6 +13,7 @@ import Contact from './components/pages/Contact';
 import PrivacyPolicy from './components/pages/PrivacyPolicy';
 import TermsOfService from './components/pages/TermsOfService';
 import SitemapGenerator from './components/pages/SitemapGenerator';
+import SitemapXml from './components/SitemapXml';
 import { supabase } from './supabase';
 
 const CACHE_KEY = 'playraft_games_cache_v2';
@@ -30,6 +31,10 @@ const getCachedGames = (): Game[] => {
 };
 
 const App: React.FC = () => {
+  if (window.location.pathname === '/sitemap.xml') {
+    return <SitemapXml />;
+  }
+
   const [allGames, setAllGames] = useState<Game[]>(getCachedGames());
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(allGames.length === 0);
@@ -57,7 +62,6 @@ const App: React.FC = () => {
       }));
       return { games: newGames, hasMore: !!result?.next_url };
     } catch (e) {
-      console.error('Fetch error:', e);
       return { games: [], hasMore: false };
     }
   }, []);
@@ -76,7 +80,7 @@ const App: React.FC = () => {
         try {
             window.localStorage.setItem(CACHE_KEY, JSON.stringify(updatedGames));
         } catch (e) {
-            console.warn('LocalStorage error on update:', e);
+            // Suppress localStorage errors
         }
         return updatedGames;
       });
@@ -125,7 +129,7 @@ const App: React.FC = () => {
     try {
       window.history.pushState({}, '', path);
     } catch (e) {
-      console.error('Navigation error:', e);
+      // Suppress navigation errors
     }
     setCurrentView(view);
     window.scrollTo(0, 0);
@@ -154,7 +158,7 @@ const App: React.FC = () => {
         try {
           window.localStorage.setItem(CACHE_KEY, JSON.stringify(uniqueGames));
         } catch (e) {
-          console.warn('LocalStorage error:', e);
+          // Suppress localStorage errors
         }
         
         const path = window.location.pathname;
@@ -182,7 +186,7 @@ const App: React.FC = () => {
         try {
           await win.CrazyGames.SDK.init();
         } catch (e) { 
-          console.debug('CrazyGames SDK init skipped or failed'); 
+          // Suppress SDK init errors
         }
       }
     };
@@ -193,7 +197,6 @@ const App: React.FC = () => {
         .select('game_id', { count: 'exact', head: true });
       
       if (error) {
-        console.error("Supabase connection error:", error.message);
         setSupabaseStatus('error');
       } else {
         setSupabaseStatus('connected');

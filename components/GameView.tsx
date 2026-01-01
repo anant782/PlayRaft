@@ -26,13 +26,9 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
     // When a game is viewed, add its ID to our sitemap table for automatic generation.
     if (game?.id) {
       const updateSitemap = async () => {
-        const { error } = await supabase
+        await supabase
           .from('sitemap_games')
-          .upsert({ game_id: game.id }, { onConflict: 'game_id' });
-
-        if (error) {
-          console.error('Error updating sitemap games in Supabase:', error.message);
-        }
+          .insert({ game_id: game.id });
       };
       updateSitemap();
     }
@@ -55,7 +51,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
         (el as any).msRequestFullscreen();
       }
     } catch (e) {
-      console.warn('Fullscreen not supported or blocked', e);
+      // Suppress fullscreen errors
     }
   };
 

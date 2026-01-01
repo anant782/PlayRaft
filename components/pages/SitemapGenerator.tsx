@@ -83,8 +83,7 @@ const SitemapGenerator: React.FC<SitemapGeneratorProps> = ({ onNavigate }) => {
             setProgress(`Sitemap generated for ${allGameIds.length} games! Copy the content and save it as public/sitemap.xml`);
         } catch (error) {
             const err = error as Error;
-            console.error(err);
-            setProgress(`An error occurred: ${err.message}. Check the console.`);
+            setProgress(`An error occurred: ${err.message}.`);
         } finally {
             setIsLoading(false);
         }
