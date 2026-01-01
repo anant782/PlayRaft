@@ -19,15 +19,15 @@ const GameCard: React.FC<GameCardProps> = ({ game, onSelectGame, className = '',
       tabIndex={0}
       aria-label={`Play ${game?.title || 'Game'}`}
     >
-      <div className="relative w-full h-full overflow-hidden rounded-2xl bg-brand-card shadow-lg transition-all duration-300 group-hover:shadow-glow group-hover:scale-[1.02] border border-white/5">
+      <div className="relative w-full h-full overflow-hidden rounded-2xl bg-brand-card shadow-lg transition-all duration-300 group-hover:shadow-glow-lg group-hover:-translate-y-1 border border-white/10">
         <img 
           src={game?.thumbnailUrl || ''} 
           alt={game?.title || 'Game Thumbnail'} 
           loading="lazy"
-          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-50" 
+          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-75" 
         />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
-          <div className="bg-brand-accent text-brand-dark font-black py-2 px-5 rounded-full flex items-center gap-2 transform group-hover:scale-100 scale-90 transition-transform duration-300 shadow-xl">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30">
+          <div className="bg-brand-accent text-brand-dark font-black py-2 px-5 rounded-full flex items-center gap-2 transform group-hover:scale-100 scale-90 transition-transform duration-300 ease-out shadow-xl">
              <PlayIcon className="w-5 h-5" />
              <span className="text-xs uppercase tracking-tighter">Play Now</span>
           </div>

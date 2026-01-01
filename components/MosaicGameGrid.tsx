@@ -37,7 +37,7 @@ const MosaicGameGrid: React.FC<MosaicGameGridProps> = ({ games, onSelectGame }) 
   if (!games || games.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
       {games.map((game, index) => (
         <GameCard
           key={game.id}

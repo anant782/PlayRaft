@@ -8,7 +8,7 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ onClick }) => {
   return (
     <div 
-      className="bg-brand-card rounded-2xl p-2 shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+      className="bg-brand-card rounded-2xl p-2 shadow-lg flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-glow"
       onClick={onClick}
     >
         <div className="w-10 h-10 bg-brand-accent rounded-lg flex items-center justify-center font-bold text-brand-dark text-2xl">

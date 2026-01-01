@@ -5,6 +5,7 @@ import CloseIcon from './icons/CloseIcon';
 import FullscreenIcon from './icons/FullscreenIcon';
 import PlayIcon from './icons/PlayIcon';
 import ArrowLeftIcon from './icons/ArrowLeftIcon';
+import { supabase } from '../supabase';
 
 interface GameViewProps {
   game: Game;
@@ -21,10 +22,25 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
     if (game?.title) {
       document.title = `${game.title} - Play Free Online on PlayRaft`;
     }
+
+    // When a game is viewed, add its ID to our sitemap table for automatic generation.
+    if (game?.id) {
+      const updateSitemap = async () => {
+        const { error } = await supabase
+          .from('sitemap_games')
+          .upsert({ game_id: game.id }, { onConflict: 'game_id' });
+
+        if (error) {
+          console.error('Error updating sitemap games in Supabase:', error.message);
+        }
+      };
+      updateSitemap();
+    }
+
     return () => {
       document.title = originalTitle;
     };
-  }, [game?.title]);
+  }, [game?.title, game?.id]);
 
   const handleFullscreen = () => {
     const el = iframeRef.current;
@@ -46,7 +62,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
   if (!game) return null;
 
   return (
-    <div className="animate-fade-in pb-12">
+    <div className="animate-fade-in-up pb-12">
       {/* Navigation & Header */}
       <nav className="flex items-center justify-between mb-8">
         <button 
@@ -66,7 +82,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Game Area */}
         <div className="lg:col-span-9 space-y-6">
-          <div className="relative aspect-video w-full bg-brand-card rounded-3xl overflow-hidden shadow-2xl border border-white/5 group">
+          <div className="relative aspect-video w-full bg-brand-card rounded-3xl overflow-hidden shadow-xl border border-white/10 group">
             {!isPlaying ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <img 
@@ -82,7 +98,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
                   </h1>
                   <button 
                     onClick={() => setIsPlaying(true)}
-                    className="group/btn relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-full group bg-gradient-to-br from-brand-accent to-blue-500 group-hover:from-brand-accent group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200"
+                    className="group/btn relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-full group bg-gradient-to-br from-brand-accent to-blue-500 hover:shadow-glow-lg transition-all duration-300 hover:scale-105 group-hover:from-brand-accent group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200"
                   >
                     <span className="relative px-12 py-5 transition-all ease-in duration-75 bg-brand-dark rounded-full group-hover/btn:bg-opacity-0 flex items-center gap-3 text-xl font-bold">
                       <PlayIcon className="w-8 h-8 text-brand-accent group-hover/btn:text-white" />
@@ -113,7 +129,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
             )}
           </div>
 
-          <div className="bg-brand-card/30 backdrop-blur-md border border-white/5 rounded-3xl p-8 shadow-xl">
+          <div className="bg-brand-card/50 backdrop-blur-lg border border-brand-accent/20 rounded-3xl p-8 shadow-xl">
             <h2 className="text-2xl font-bold text-brand-text-primary mb-4">About {game.title}</h2>
             <p className="text-brand-text-secondary leading-relaxed text-lg">
               {game.description || `Play ${game.title} online for free! Enjoy high-quality gameplay directly in your browser.`}
@@ -139,7 +155,7 @@ const GameView: React.FC<GameViewProps> = ({ game, onClose }) => {
 
         {/* Sidebar */}
         <div className="lg:col-span-3 space-y-6">
-           <div className="bg-brand-card/30 backdrop-blur-md border border-white/5 rounded-3xl p-6 shadow-xl">
+           <div className="bg-brand-card/50 backdrop-blur-lg border border-brand-accent/20 rounded-3xl p-6 shadow-xl">
               <h3 className="text-lg font-bold text-brand-text-primary mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 bg-brand-accent rounded-full animate-pulse"></span>
                 Play More

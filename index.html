@@ -40,7 +40,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
     <script type="importmap">
@@ -48,7 +48,8 @@
       "imports": {
         "react/": "https://esm.sh/react@^19.2.3/",
         "react": "https://esm.sh/react@^19.2.3",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
       }
     }
     </script>
@@ -62,13 +63,24 @@
             colors: {
               'brand-dark': '#0F172A',
               'brand-blue': '#1E3A8A',
-              'brand-card': '#111827',
+              'brand-card': '#1E293B',
               'brand-accent': '#22D3EE',
-              'brand-text-primary': '#F9FAFB',
-              'brand-text-secondary': '#9CA3AF',
+              'brand-accent-hover': '#67E8F9',
+              'brand-text-primary': '#F1F5F9',
+              'brand-text-secondary': '#94A3B8',
             },
             boxShadow: {
-              'glow': '0 0 15px 5px rgba(34, 211, 238, 0.25)',
+              'glow': '0 0 20px 5px rgba(34, 211, 238, 0.2)',
+              'glow-lg': '0 0 35px 10px rgba(34, 211, 238, 0.15)',
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.5s ease-in-out forwards',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
             }
           },
         },
@@ -77,15 +89,14 @@
     <style>
       .scrollbar-hide::-webkit-scrollbar { display: none; }
       .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      .bg-dark-gradient {
-        background-color: #1E3A8A;
-        background-image: linear-gradient(to bottom, #0F172A 0%, #1E3A8A 100%);
+      /* The body's dark gradient gives depth to the page */
+      body {
+        background-color: #0F172A; /* Fallback */
+        background-image: radial-gradient(circle at 50% 0%, rgba(30, 58, 138, 0.45) 0%, #0F172A 40%);
       }
-      .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
-      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
   </head>
-  <body class="bg-dark-gradient font-sans">
+  <body class="bg-brand-dark font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
