@@ -20,6 +20,14 @@ const CACHE_KEY = 'playraft_games_cache_v2';
 
 type View = 'home' | 'about' | 'contact' | 'privacy' | 'terms' | 'game' | 'sitemap';
 
+const transformImageUrl = (url: string): string => {
+  if (!url || !url.startsWith('http')) return '';
+  // Request a reasonably sized image and let the service optimize it.
+  // Using WebP for modern format and 80 quality for a good balance.
+  const width = 512; 
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${width}&fit=cover&output=webp&q=80`;
+};
+
 const getCachedGames = (): Game[] => {
   try {
     const item = window.localStorage.getItem(CACHE_KEY);
@@ -53,7 +61,7 @@ const App: React.FC = () => {
       const newGames: Game[] = (result?.items || []).map((game: any) => ({
         id: `gp_${game.id}`,
         title: game.title || 'Untitled Game',
-        thumbnailUrl: game.banner_image || game.thumbnail_url || '',
+        thumbnailUrl: transformImageUrl(game.banner_image || game.thumbnail_url || ''),
         category: game.category || 'General',
         gameUrl: game.url || '',
         description: game.description || `Experience the ultimate ${game.category || 'online'} adventure in ${game.title || 'this game'}. Play directly in your browser with no downloads required! High-quality graphics and smooth gameplay await in this trending title on PlayRaft.`,
